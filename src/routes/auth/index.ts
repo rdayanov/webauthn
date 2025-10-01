@@ -19,8 +19,11 @@ const registrationSchema = {
     username: {
       type: 'string',
     },
+    displayName: {
+      type: 'string',
+    },
   },
-  required: ['username', 'email'],
+  required: ['username', 'email', 'displayName'],
   additionalProperties: false,
 } as const
 
@@ -53,15 +56,16 @@ const authRoutes: FastifyPluginAsync = async (fastify, opts) => {
       body: registrationSchema,
     },
   }, async function (request, reply) {
-    const { username, email } = request.body
+    const { username, email, displayName } = request.body
     const user: User = await prisma.user.findFirst({ where: { username } })
-      || await prisma.user.create({ data: { email, username } })
+      || await prisma.user.create({ data: { email, username, displayName } })
     const userPasskeys: Passkey[] = await prisma.passkey.findMany({ where: { user } })
 
     const options = await generateRegistrationOptions({
       rpName: fastify.webauthn.rpName,
       rpID: fastify.webauthn.rpID,
       userName: user.username,
+      userDisplayName: user.displayName,
       attestationType: 'none',
       excludeCredentials: userPasskeys.map(({ id, transports }) => ({
         id,
