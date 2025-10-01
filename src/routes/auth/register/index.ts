@@ -7,7 +7,7 @@ import {
 
 import { FastifyPluginAsync } from 'fastify'
 import { FromSchema } from 'json-schema-to-ts'
-import type { Passkey, User } from '../../generated/prisma/client.ts'
+import type { Passkey, User } from '../../../generated/prisma/client.ts'
 
 const registrationSchema = {
   type: 'object',
@@ -47,11 +47,11 @@ type VerifyRegistrationBody = FromSchema<typeof verifyRegistrationSchema> & Regi
 const authRoutes: FastifyPluginAsync = async (fastify, opts) => {
   const { prisma } = fastify
 
-  fastify.get('/register', async (request, reply) => {
+  fastify.get('/', async (request, reply) => {
     return reply.sendFile('registration.html')
   })
 
-  fastify.post<{ Body: RegistrationBody }>('/register/start', {
+  fastify.post<{ Body: RegistrationBody }>('/start', {
     schema: {
       body: registrationSchema,
     },
@@ -83,7 +83,7 @@ const authRoutes: FastifyPluginAsync = async (fastify, opts) => {
     return options
   })
 
-  fastify.post<{ Body: VerifyRegistrationBody }>('/register/verify', {
+  fastify.post<{ Body: VerifyRegistrationBody }>('/verify', {
     schema: {
       body: verifyRegistrationSchema,
     },
