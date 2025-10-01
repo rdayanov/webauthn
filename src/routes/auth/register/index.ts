@@ -44,8 +44,8 @@ const verifyRegistrationSchema = {
 } as const
 type VerifyRegistrationBody = FromSchema<typeof verifyRegistrationSchema> & RegistrationResponseJSON
 
-const authRoutes: FastifyPluginAsync = async (fastify, opts) => {
-  const { prisma } = fastify
+const registrationRoutes: FastifyPluginAsync = async (fastify, opts) => {
+  const { prisma, webauthn } = fastify
 
   fastify.get('/', async (request, reply) => {
     return reply.sendFile('registration.html')
@@ -62,8 +62,8 @@ const authRoutes: FastifyPluginAsync = async (fastify, opts) => {
     const userPasskeys: Passkey[] = await prisma.passkey.findMany({ where: { user } })
 
     const options = await generateRegistrationOptions({
-      rpName: fastify.webauthn.rpName,
-      rpID: fastify.webauthn.rpID,
+      rpName: webauthn.RP.rpName,
+      rpID: webauthn.RP.rpID,
       userName: user.username,
       userDisplayName: user.displayName,
       attestationType: 'none',
@@ -78,7 +78,7 @@ const authRoutes: FastifyPluginAsync = async (fastify, opts) => {
       },
     })
 
-    request.session.webauthnChallenge = options
+    webauthn.storeChallenge(options, request)
 
     return options
   })
@@ -88,8 +88,8 @@ const authRoutes: FastifyPluginAsync = async (fastify, opts) => {
       body: verifyRegistrationSchema,
     },
   }, async (request, reply) => {
-    if (request.session.webauthnChallenge) {
-      const challenge = request.session.webauthnChallenge
+    const challenge = webauthn.getRegistrationChallenge(request)
+    if (challenge) {
       const user = await prisma.user.findUnique({ where: { username: challenge.user.name } })
 
       if (!user) {
@@ -102,8 +102,8 @@ const authRoutes: FastifyPluginAsync = async (fastify, opts) => {
         verification = await verifyRegistrationResponse({
           response: request.body,
           expectedChallenge: challenge.challenge,
-          expectedRPID: fastify.webauthn.rpID,
-          expectedOrigin: fastify.webauthn.origin,
+          expectedRPID: fastify.webauthn.RP.rpID,
+          expectedOrigin: fastify.webauthn.RP.origin,
         })
       } catch (error) {
         console.error(error)
@@ -129,7 +129,6 @@ const authRoutes: FastifyPluginAsync = async (fastify, opts) => {
       }
 
       return { verified }
-
     } else {
       reply.status(404)
       throw new Error('No active registration found')
@@ -137,4 +136,4 @@ const authRoutes: FastifyPluginAsync = async (fastify, opts) => {
   })
 }
 
-export default authRoutes
+export default registrationRoutes

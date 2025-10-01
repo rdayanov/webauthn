@@ -33,22 +33,27 @@
     <input id="username"
            type="text"
            name="username"
+           autocomplete="username"
            required/>
   </label>
   <label>
     Email:
     <input id="email"
            type="email"
+           autocomplete="email"
            name="email"/>
   </label>
   <label>
     Display Name:
     <input id="display-name"
            type="text"
+           autocomplete="display-name"
            name="displayName"/>
   </label>
   <button>Send</button>
 </form>
+<p>Already have an account? <a href="/auth/login">Login</a></p>
+
 <script>
   const { startRegistration } = SimpleWebAuthnBrowser
 

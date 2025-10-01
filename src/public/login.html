@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Login</title>
+  <style>
+      #login-form {
+          display: flex;
+          flex-direction: column;
+          gap: 1rem;
+          align-items: flex-start;
+
+          button {
+              width: fit-content;
+          }
+      }
+
+      #error {
+          color: darkred;
+          margin-bottom: 1rem;
+      }
+  </style>
+  <script src="https://unpkg.com/@simplewebauthn/browser/dist/bundle/index.umd.min.js"></script>
+</head>
+<body>
+<h1>Login</h1>
+<p id="error"></p>
+<form id="login-form"
+      method="POST"
+      action="/start">
+  <label>
+    Username:
+    <input id="username"
+           type="text"
+           name="username"
+           autocomplete="username webauthn"
+           required/>
+  </label>
+  <button>Login</button>
+</form>
+<p>Don't have an account yet? <a href="/auth/register">Register</a></p>
+<script>
+  const { startAuthentication, WebAuthnError } = SimpleWebAuthnBrowser
+  login()
+
+  document.getElementById('login-form').addEventListener('submit', async (event) => {
+    event.preventDefault()
+
+    const username = document.getElementById('username').value
+    await login(username, false)
+  })
+
+  /**
+   * @param username {string=}
+   * @param useBrowserAutofill {boolean=true}
+   * @return {Promise<void>}
+   */
+  async function login(username, useBrowserAutofill = true) {
+    showError('')
+
+    try {
+      const challenge = await fetch('/auth/login/start', {
+        method: 'POST',
+        body: JSON.stringify({ username }),
+        headers: { 'Content-Type': 'application/json' },
+      }).then((response) => {
+        return response.json().then((r) => {
+          if (!response.ok) {
+            throw new Error(r.message || `HTTP error! status: ${ response.status }`)
+          }
+          return r
+        })
+      })
+
+      const assertionResponse = await startAuthentication({ optionsJSON: challenge, useBrowserAutofill })
+
+      const verificationResponse = await fetch('/auth/login/verify', {
+        method: 'POST',
+        body: JSON.stringify({ response: assertionResponse }),
+        headers: { 'Content-Type': 'application/json' },
+      }).then(response => response.json().then((r) => {
+        if (!response.ok) {
+          throw new Error(r.message || `HTTP error! status: ${ response.status }`)
+        }
+        return r
+      }))
+      if (!verificationResponse.verified) {
+        showError(
+          `Oh no, something went wrong! Response: <pre>${ JSON.stringify(
+            verificationResponse,
+          ) }</pre>`,
+          'html',
+        )
+      }
+    } catch (e) {
+      if (e instanceof WebAuthnError && e.code === 'ERROR_CEREMONY_ABORTED') {
+        // Error can safely be ignored
+      } else {
+        showError(e)
+      }
+    }
+  }
+
+  /**
+   * @param error {string | { message: string }}
+   * @param type {'message' | 'html'='message'}
+   */
+  function showError(error, type = 'message') {
+    const elemError = document.getElementById('error')
+    if (error.message) {
+      elemError.innerText = error.message
+    } else {
+      if (type === 'html') {
+        elemError.innerHTML = error
+      } else {
+        elemError.innerText = error
+      }
+    }
+  }
+</script>
+</body>
+</html>
