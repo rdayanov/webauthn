@@ -2,6 +2,7 @@ import * as path from 'node:path'
 import AutoLoad, { AutoloadPluginOptions } from '@fastify/autoload'
 import { FastifyPluginAsync } from 'fastify'
 import { fileURLToPath } from 'node:url'
+import Static from '@fastify/static'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -11,14 +12,18 @@ export type AppOptions = {
 } & Partial<AutoloadPluginOptions>
 
 // Pass --options via CLI arguments in command to enable these options.
-const options: AppOptions = {
-}
+const options: AppOptions = {}
 
 const app: FastifyPluginAsync<AppOptions> = async (
   fastify,
-  opts
+  opts,
 ): Promise<void> => {
   // Place here your custom code!
+  void fastify.register(Static, {
+    root: path.join(__dirname, 'public'),
+    prefix: '/',
+    constraints: {},
+  })
 
   // Do not touch the following lines
 
@@ -29,7 +34,7 @@ const app: FastifyPluginAsync<AppOptions> = async (
   void fastify.register(AutoLoad, {
     dir: path.join(__dirname, 'plugins'),
     options: opts,
-    forceESM: true
+    forceESM: true,
   })
 
   // This loads all plugins defined in routes
@@ -38,7 +43,7 @@ const app: FastifyPluginAsync<AppOptions> = async (
   void fastify.register(AutoLoad, {
     dir: path.join(__dirname, 'routes'),
     options: opts,
-    forceESM: true
+    forceESM: true,
   })
 }
 

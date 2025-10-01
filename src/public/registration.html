@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Registration</title>
+  <style>
+      #registration-form {
+          display: flex;
+          flex-direction: column;
+          gap: 1rem;
+          align-items: flex-start;
+
+          button {
+              width: fit-content;
+          }
+      }
+
+      #error {
+          color: darkred;
+          margin-bottom: 1rem;
+      }
+  </style>
+  <script src="https://unpkg.com/@simplewebauthn/browser/dist/bundle/index.umd.min.js"></script>
+</head>
+<body>
+<h1>Registration</h1>
+<p id="error"></p>
+<form id="registration-form"
+      method="POST"
+      action="http://localhost:3030/auth/register/start">
+  <label>
+    Username:
+    <input id="username"
+           type="text"
+           name="username"/>
+  </label>
+  <label>
+    Email:
+    <input id="email"
+           type="email"
+           name="email"/>
+  </label>
+  <button>Send</button>
+</form>
+<script>
+  const { startRegistration } = SimpleWebAuthnBrowser
+
+  const elemError = document.getElementById('error')
+
+  document.getElementById('registration-form').addEventListener('submit', async function (event) {
+    event.preventDefault()
+    showError('')
+
+    const email = document.getElementById('email').value
+    const username = document.getElementById('username').value
+    const challenge = await fetch('http://localhost:3030/auth/register/start', {
+      method: 'POST',
+      body: JSON.stringify({ email, username }),
+      headers: { 'Content-Type': 'application/json' },
+    })
+      .then((response) => {
+        if (response.ok) {
+          return response.json()
+        }
+      })
+
+    let attResp
+    try {
+      attResp = await startRegistration({ optionsJSON: challenge })
+
+      try {
+        const verificationResponse = await fetch('http://localhost:3030/auth/register/verify', {
+          method: 'POST',
+          body: JSON.stringify(attResp),
+          headers: { 'Content-Type': 'application/json' },
+        }).then((response) => {
+          return response.json().then((r) => {
+            if (!response.ok) {
+              throw new Error(r.message || `HTTP error! status: ${ response.status }`)
+            }
+            return r
+          })
+        })
+
+        if (verificationResponse.verified) {
+          alert('Success')
+        } else {
+          showError('Verification failed')
+        }
+      } catch (error) {
+        showError(error)
+      }
+
+    } catch (error) {
+      if (error.name === 'InvalidStateError') {
+        showError('Error: Authenticator was probably already registered by user')
+      } else {
+        showError(error)
+      }
+
+      throw error
+    }
+  })
+
+  function showError(error) {
+    if (error.message) {
+      elemError.innerText = error.message
+    } else {
+      elemError.innerText = error
+    }
+  }
+</script>
+</body>
+</html>
