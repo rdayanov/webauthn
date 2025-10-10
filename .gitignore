@@ -68,3 +68,9 @@ dist
 .env
 prisma/*.db
 prisma/*.db-journal
+
+# Local SSL certificates
+*.key
+*.crt
+*.pem
+*.csr

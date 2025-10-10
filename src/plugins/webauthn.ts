@@ -7,7 +7,7 @@ import fp from 'fastify-plugin'
 
 const rpName = 'WebAuthn Lab'
 const rpID = `localhost`
-const origin = `http://localhost:${ process.env.PORT }`
+const origin = `https://localhost:${ process.env.PORT }`
 
 declare module 'fastify' {
   interface FastifyInstance {
