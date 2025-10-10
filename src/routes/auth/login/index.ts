@@ -102,8 +102,9 @@ const loginRoutes: FastifyPluginAsync = async (fastify, opts) => {
     if (verified) {
       const { authenticationInfo: { newCounter } } = verification
       await prisma.passkey.update({ data: { counter: newCounter }, where: { id: passkey.id } })
-      const user = await prisma.user.findUnique({ where: { id: passkey.userId } })
-      console.log('user: ', user)
+      const { email, ...user } = await prisma.user.findUnique({ where: { id: passkey.userId } }) ?? {}
+      const token = fastify.jwt.sign({ user }, { expiresIn: '5m' })
+      return { verified, token }
     }
 
     return { verified }
