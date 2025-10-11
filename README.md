@@ -25,7 +25,7 @@ To learn Fastify, check out the [Fastify documentation](https://fastify.dev/docs
 
 ## Local HTTPS Setup
 
-Generate local SSL certificates for development:
+### Generate local SSL certificates for development:
 
 ```bash
 openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
@@ -33,4 +33,17 @@ openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
   -out localhost.crt \
   -subj "/CN=localhost" \
   -addext "subjectAltName=DNS:localhost,IP:127.0.0.1"
+```
+
+### Download certificate
+
+- Navigate to https://localhost:3030
+- Click the "Not Secure" warning in address bar
+- Click "Certificate" → "Details" → "Export"
+- Import it into your system's trusted certificates
+
+### Add certificate to trusted
+
+```bash
+sudo security add-trusted-cert -d -r trustRoot -k /Library/Keychains/System.keychain ./localhost.pem
 ```
