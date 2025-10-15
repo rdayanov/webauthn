@@ -38,7 +38,7 @@
   </label>
   <button>Login</button>
 </form>
-<p>Don't have an account yet? <a href="/auth/register">Register</a></p>
+<p>Don't have an account yet? <a href="/register">Register</a></p>
 <script>
   const { startAuthentication, WebAuthnError } = SimpleWebAuthnBrowser
   login()
@@ -59,7 +59,7 @@
     showError('')
 
     try {
-      const challenge = await fetch('/auth/login/start', {
+      const challenge = await fetch('/login/start', {
         method: 'POST',
         body: JSON.stringify({ username }),
         headers: { 'Content-Type': 'application/json' },
@@ -74,7 +74,7 @@
 
       const assertionResponse = await startAuthentication({ optionsJSON: challenge, useBrowserAutofill })
 
-      const verificationResponse = await fetch('/auth/login/verify', {
+      const verificationResponse = await fetch('/login/verify', {
         method: 'POST',
         body: JSON.stringify({ response: assertionResponse }),
         headers: { 'Content-Type': 'application/json' },
@@ -91,10 +91,7 @@
           ) }</pre>`,
           'html',
         )
-        return
       }
-
-      console.log(atob(verificationResponse.token.split('.')[1]).user)
     } catch (e) {
       if (e instanceof WebAuthnError && e.code === 'ERROR_CEREMONY_ABORTED') {
         // Error can safely be ignored

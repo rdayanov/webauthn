@@ -6,7 +6,7 @@ import {
 } from '@simplewebauthn/server'
 import { FastifyPluginAsync } from 'fastify'
 import { FromSchema } from 'json-schema-to-ts'
-import { Passkey } from '../../../generated/prisma/client.js'
+import { Passkey } from '../../generated/prisma/client.js'
 
 const authStartSchema = {
   type: 'object',
@@ -103,8 +103,9 @@ const loginRoutes: FastifyPluginAsync = async (fastify, opts) => {
       const { authenticationInfo: { newCounter } } = verification
       await prisma.passkey.update({ data: { counter: newCounter }, where: { id: passkey.id } })
       const { email, ...user } = await prisma.user.findUnique({ where: { id: passkey.userId } }) ?? {}
-      const token = fastify.jwt.sign({ user }, { expiresIn: '5m' })
-      return { verified, token }
+      const token = fastify.jwtToken.createToken(user)
+      reply.jwtTokenStoreToken(token)
+      return { verified }
     }
 
     return { verified }

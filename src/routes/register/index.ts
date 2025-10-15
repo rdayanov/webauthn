@@ -7,7 +7,7 @@ import {
 
 import { FastifyPluginAsync } from 'fastify'
 import { FromSchema } from 'json-schema-to-ts'
-import type { Passkey, User } from '../../../generated/prisma/client.ts'
+import type { Passkey, User } from '../../generated/prisma/client.ts'
 
 const registrationSchema = {
   type: 'object',
