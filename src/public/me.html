@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Me</title>
+  <style>
+      .username {
+          font-weight: bold;
+      }
+
+      .contacts {
+          margin-top: 2rem;
+          display: flex;
+          flex-flow: row nowrap;
+          justify-content: flex-start;
+          align-items: center;
+          gap: 2rem;
+      }
+  </style>
+</head>
+<body>
+<div id="root"></div>
+<script type="module">
+  const rootElement = document.getElementById('root')
+
+  const user = await fetch('/me').then(res => res.json())
+
+  const userName = document.createElement('p')
+  userName.classList.add('username')
+  userName.innerText = `User: ${ user.username }`
+  rootElement.appendChild(userName)
+
+  const userDisplayName = document.createElement('p')
+  userDisplayName.classList.add('username')
+  userDisplayName.innerText = `Known as: ${ user.displayName }`
+  rootElement.appendChild(userDisplayName)
+
+  const contacts = document.createElement('div')
+  contacts.classList.add('contacts')
+  rootElement.appendChild(contacts)
+
+  const emailLabel = document.createElement('p')
+  emailLabel.innerText = `Email: ******************`
+  contacts.appendChild(emailLabel)
+
+  const revealButton = document.createElement('button')
+  revealButton.type = 'button'
+  revealButton.innerText = 'Reveal'
+  contacts.appendChild(revealButton)
+  revealButton.addEventListener('click', async () => {
+    const { email } = await fetch('/me/email').then(res => res.json())
+    emailLabel.innerText = `Email: ${ email }`
+    revealButton.style.display = 'none'
+  })
+
+</script>
+</body>
+</html>

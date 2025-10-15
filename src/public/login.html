@@ -91,7 +91,10 @@
           ) }</pre>`,
           'html',
         )
+        return
       }
+
+      window.location.href = '/'
     } catch (e) {
       if (e instanceof WebAuthnError && e.code === 'ERROR_CEREMONY_ABORTED') {
         // Error can safely be ignored

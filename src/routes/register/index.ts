@@ -128,6 +128,9 @@ const registrationRoutes: FastifyPluginAsync = async (fastify, opts) => {
         await prisma.passkey.create({ data: newPasskey })
       }
 
+      const token = fastify.jwtToken.createToken(user)
+      reply.jwtTokenStoreToken(token)
+
       return { verified }
     } else {
       reply.status(404)
