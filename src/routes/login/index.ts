@@ -65,8 +65,8 @@ const loginRoutes: FastifyPluginAsync = async (fastify, opts) => {
   fastify.post<{
     Body: AuthVerificationBody
   }>('/verify', { schema: { body: authVerificationSchema } }, async (request, reply) => {
-    const challenge = webauthn.getRequestChallenge(request)
-    if (!challenge) {
+    const storedChallenge = webauthn.getRequestChallenge(request)
+    if (!storedChallenge) {
       reply.status(404)
       throw new Error('No challenge found for the auth request.')
     }
@@ -81,7 +81,7 @@ const loginRoutes: FastifyPluginAsync = async (fastify, opts) => {
     try {
       verification = await verifyAuthenticationResponse({
         response,
-        expectedChallenge: challenge.challenge,
+        expectedChallenge: storedChallenge.challenge.challenge,
         expectedOrigin: webauthn.RP.origin,
         expectedRPID: webauthn.RP.rpID,
         credential: {

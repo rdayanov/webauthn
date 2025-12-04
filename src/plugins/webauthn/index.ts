@@ -1,14 +1,12 @@
-import type {
-  PublicKeyCredentialCreationOptionsJSON,
-  PublicKeyCredentialRequestOptionsJSON,
-} from '@simplewebauthn/server'
 import fp from 'fastify-plugin'
 import {
   ChallengeStoreHelpers,
   getRegistrationChallenge,
   getRequestChallenge,
-  storeChallenge,
+  storeChallenge, StoredChallenge,
 } from './challenge-store.js'
+
+import { secondFactor, UserVerification } from './second-factor.js'
 
 const rpName = 'WebAuthn Lab'
 const rpID = `localhost`
@@ -24,11 +22,15 @@ declare module 'fastify' {
       };
     } & ChallengeStoreHelpers;
   }
+
+  interface FastifyRequest {
+    webauthn2fa(userVerification?: UserVerification): Promise<void>;
+  }
 }
 
 declare module '@fastify/session' {
   interface FastifySessionObject {
-    webauthnChallenge?: PublicKeyCredentialCreationOptionsJSON | PublicKeyCredentialRequestOptionsJSON;
+    webauthnChallenge?: StoredChallenge;
   }
 }
 
@@ -43,5 +45,7 @@ export default fp(async function (fastify) {
     getRegistrationChallenge,
     getRequestChallenge,
   })
+
+  fastify.decorateRequest('webauthn2fa', secondFactor)
 
 })

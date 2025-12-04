@@ -17,10 +17,13 @@
           gap: 2rem;
       }
   </style>
+  <script src="https://unpkg.com/@simplewebauthn/browser/dist/bundle/index.umd.min.js"></script>
 </head>
 <body>
 <div id="root"></div>
 <script type="module">
+  const { startAuthentication } = SimpleWebAuthnBrowser
+
   const rootElement = document.getElementById('root')
 
   const user = await fetch('/me').then(res => res.json())
@@ -48,7 +51,22 @@
   revealButton.innerText = 'Reveal'
   contacts.appendChild(revealButton)
   revealButton.addEventListener('click', async () => {
-    const { email } = await fetch('/me/email').then(res => res.json())
+    const { email } = await fetch('/me/email').then(async res => {
+      const result = await res.json()
+      if (res.ok) {
+        return result
+      }
+
+      if (res.status === 428) {
+        const { challenge } = JSON.parse(result.message)
+        const assertionResponse = await startAuthentication({ optionsJSON: challenge })
+        return fetch('/me/email', {
+          headers: {
+            'x-2fa-challenge-response': btoa(JSON.stringify(assertionResponse)),
+          },
+        }).then(res => res.json())
+      }
+    })
     emailLabel.innerText = `Email: ${ email }`
     revealButton.style.display = 'none'
   })
